@@ -2,6 +2,8 @@ import express from 'express';
 import connectDB from './config/database';
 import mongoose from 'mongoose';
 import User from './models/user';
+import { validateSignUpData } from './utils/validation';
+import becrypt from 'bcrypt';
 
 const app = express();
 
@@ -27,13 +29,40 @@ app.get('/', (req, res) => {
 });
 
 app.post('/signup', async (req, res) => {
-  const user = new User(req.body);
-
   try {
+    validateSignUpData(req.body);
+
+    const passwordHash = await becrypt.hash(req.body.password, 10);
+
+    const user = new User({ ...req.body, password: passwordHash });
+
     await user.save();
     res.status(201).send('User Created Successfully');
   } catch (err) {
     res.status(400).send('Error saving the user' + err);
+  }
+});
+
+app.post('/login', async (req, res) => {
+  try {
+    const user: any = await User.findOne({ emailId: req.body.emailId });
+
+    if (!user) {
+      throw new Error('User Not found');
+    }
+
+    const isPasswordValid = await becrypt.compare(
+      req.body.password,
+      user.password
+    );
+
+    if (isPasswordValid) {
+      res.send('User Login Successfully');
+    }
+
+    throw new Error('Invalid Password');
+  } catch (err) {
+    res.status(400).send('Unable to login' + err);
   }
 });
 
