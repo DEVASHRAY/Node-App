@@ -1,5 +1,8 @@
+import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import validator from 'validator';
+import becrypt from 'bcrypt';
+
 const { Schema } = mongoose;
 
 const userSchema = new Schema(
@@ -51,6 +54,28 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+
+userSchema.methods.getJWT = async function () {
+  const user: any = this;
+
+  const token = await jwt.sign(
+    { userId: user._id },
+    process.env.JWT_SECRET_KEY as string,
+    { expiresIn: '1hr' }
+  );
+
+  return token;
+};
+
+userSchema.methods.validatePassword = async function (password: string) {
+  const user: any = this;
+
+  const storedPasswordfHash = user.password;
+
+  const isPasswrodValid = await becrypt.compare(password, storedPasswordfHash);
+
+  return isPasswrodValid;
+};
 
 const User = mongoose.model('User', userSchema);
 

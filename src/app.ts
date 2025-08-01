@@ -4,6 +4,13 @@ import mongoose from 'mongoose';
 import User from './models/user';
 import { validateSignUpData } from './utils/validation';
 import becrypt from 'bcrypt';
+import cookieParser from 'cookie-parser';
+import jwt from 'jsonwebtoken';
+import authMiddleware from './middlewares/auth';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 
@@ -23,7 +30,9 @@ connectDB()
   });
 
 app.use(express.json());
+app.use(cookieParser());
 
+// Public routes (no authentication required)
 app.get('/', (req, res) => {
   res.send('Hey');
 });
@@ -51,18 +60,35 @@ app.post('/login', async (req, res) => {
       throw new Error('User Not found');
     }
 
-    const isPasswordValid = await becrypt.compare(
-      req.body.password,
-      user.password
-    );
+    const isPasswordValid = await user.validatePassword(req.body.password);
 
     if (isPasswordValid) {
-      res.send('User Login Successfully');
-    }
+      const jwtToken = await user.getJWT();
 
-    throw new Error('Invalid Password');
+      res.cookie('token', jwtToken, { httpOnly: true, secure: true });
+      res.send('User Login Successfully');
+    } else {
+      throw new Error('Invalid Password');
+    }
   } catch (err) {
     res.status(400).send('Unable to login' + err);
+  }
+});
+
+// Protected routes (authentication required)
+app.use(authMiddleware);
+
+app.get('/profile', async (req, res) => {
+  try {
+    const user = (req as any).user;
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    res.send(user);
+  } catch (err) {
+    res.status(400).send('Err' + err);
   }
 });
 
