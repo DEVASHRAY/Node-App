@@ -4,6 +4,7 @@ import {
   CONNECTION_REQUEST_STATUS_MAPPING,
   USER_SAFE_DATA,
 } from '../utils/constants';
+import User from '../models/user';
 
 const userRouter = express.Router();
 
@@ -70,6 +71,58 @@ userRouter.get('/user/connection', async (req, res) => {
   } catch (err: any) {
     res.status(400).json({
       message: 'Failed to fetch connections',
+      error: err.message,
+    });
+  }
+});
+
+userRouter.get('/user/feed', async (req, res) => {
+  try {
+    const { user } = req as any;
+
+    const params = req.query as any;
+
+    const page = +params.page || 1;
+    const limit = +params.limit || 10;
+
+    const allConnectionRequestForUser = await ConnectionRequest.find({
+      $or: [
+        {
+          senderId: user._id,
+        },
+        {
+          receiverId: user._id,
+        },
+      ],
+    }).select('senderId receiverId status');
+
+    const hideUsersFromFeed = new Set();
+
+    allConnectionRequestForUser.forEach((item) => {
+      hideUsersFromFeed.add(item.senderId.toString());
+      hideUsersFromFeed.add(item.receiverId.toString());
+    });
+
+    const feedUsers = await User.find({
+      $and: [
+        {
+          _id: { $nin: Array.from(hideUsersFromFeed) },
+        },
+        {
+          _id: { $ne: user._id },
+        },
+      ],
+    })
+      .select(USER_SAFE_DATA)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      data: feedUsers,
+    });
+  } catch (err: any) {
+    res.status(400).json({
+      message: 'Unable to get feed',
       error: err.message,
     });
   }
