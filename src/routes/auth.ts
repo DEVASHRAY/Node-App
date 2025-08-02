@@ -2,8 +2,6 @@ import becrypt from 'bcrypt';
 import express from 'express';
 import User from '../models/user';
 import { validateSignUpData } from '../utils/validation';
-import jwt from 'jsonwebtoken';
-import authMiddleware from '../middlewares/auth';
 
 const authRouter = express.Router();
 

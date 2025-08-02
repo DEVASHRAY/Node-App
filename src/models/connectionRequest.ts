@@ -5,11 +5,12 @@ const connectionRequestSchema = new mongoose.Schema(
   {
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: 'User', // reference To the user collection i.e link it to User Collection
       required: true,
-      index: true,
     },
     receiverId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
     },
     status: {
@@ -18,9 +19,9 @@ const connectionRequestSchema = new mongoose.Schema(
       enum: {
         values: [
           CONNECTION_REQUEST_STATUS_MAPPING.interested,
-          CONNECTION_REQUEST_STATUS_MAPPING.ignored,
-          CONNECTION_REQUEST_STATUS_MAPPING.accepted,
-          CONNECTION_REQUEST_STATUS_MAPPING.rejected,
+          CONNECTION_REQUEST_STATUS_MAPPING.ignore,
+          CONNECTION_REQUEST_STATUS_MAPPING.reject,
+          CONNECTION_REQUEST_STATUS_MAPPING.accept,
         ],
         message: `{VALUE} is not supported`,
       },

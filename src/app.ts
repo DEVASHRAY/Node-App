@@ -7,6 +7,7 @@ import User from './models/user';
 import authRouter from './routes/auth';
 import profileRouter from './routes/profile';
 import requestRouter from './routes/request';
+import userRouter from './routes/user';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use('/', authRouter);
 app.use(authMiddleware);
 app.use('/', profileRouter);
 app.use('/', requestRouter);
+app.use('/', userRouter);
 
 connectDB()
   .then(() => {

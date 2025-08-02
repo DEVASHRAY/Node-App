@@ -1,6 +1,8 @@
 export enum CONNECTION_REQUEST_STATUS_MAPPING {
   interested = 'INTERESTED',
-  ignored = 'IGNORED',
-  accepted = 'ACCEPTED',
-  rejected = 'REJECTED',
+  ignore = 'IGNORED',
+  accept = 'ACCEPTED',
+  reject = 'REJECTED',
 }
+
+export const USER_SAFE_DATA = 'firstName lastName photoUrl age gender';
