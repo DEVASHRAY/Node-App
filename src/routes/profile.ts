@@ -37,13 +37,13 @@ profileRouter.patch('/profile/edit', async (req, res) => {
       throw new Error('Invalid Payload. Few Fields cannot be edited');
     }
 
-    const loggedInUser = (req as any).user;
+    const user = (req as any).user;
 
     Object.keys(req.body).forEach((key) => {
-      loggedInUser[key] = req.body[key];
+      user[key] = req.body[key];
     });
 
-    const updatedUser = await loggedInUser.save();
+    const updatedUser = await user.save();
 
     res.json({
       message: 'User updated succesfully',
