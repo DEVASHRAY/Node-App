@@ -11,6 +11,9 @@ const userRouter = express.Router();
 userRouter.get('/user/request/received', async (req, res) => {
   try {
     const user = (req as any).user;
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
     const connectionRequestList = await ConnectionRequest.find({
       receiverId: user._id,
@@ -19,12 +22,13 @@ userRouter.get('/user/request/received', async (req, res) => {
       .populate('senderId', USER_SAFE_DATA)
       .populate('receiverId', ['firstName']);
 
-    res.json({
-      message: 'Data Fetched Successfully',
+    res.status(200).json({
+      message: 'Data fetched successfully',
       data: connectionRequestList,
     });
   } catch (err: any) {
-    res.status(400).json({
+    console.error(err);
+    res.status(500).json({
       message: 'Failed to fetch received connection requests',
       error: err.message,
     });
@@ -34,6 +38,9 @@ userRouter.get('/user/request/received', async (req, res) => {
 userRouter.get('/user/connection', async (req, res) => {
   try {
     const user = (req as any).user;
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
     const connectionList = await ConnectionRequest.find({
       $or: [
@@ -50,26 +57,23 @@ userRouter.get('/user/connection', async (req, res) => {
       .populate('senderId', USER_SAFE_DATA)
       .populate('receiverId', USER_SAFE_DATA);
 
-    // Normalize response to return only the other user
     const normalizedConnections = connectionList.map((item) => {
       const isSender = item.senderId._id.toString() === user._id.toString();
-      const OtherUserDetailsDoc: any = isSender
-        ? item.receiverId
-        : item.senderId;
-
+      const otherUser: any = isSender ? item.receiverId : item.senderId;
       return {
         connectionId: item._id,
-        connectedUserDetails: OtherUserDetailsDoc,
+        connectedUserDetails: otherUser,
         connectedAt: item.updatedAt,
       };
     });
 
-    res.json({
-      message: 'Connection fetched successfully',
+    res.status(200).json({
+      message: 'Connections fetched successfully',
       data: normalizedConnections,
     });
   } catch (err: any) {
-    res.status(400).json({
+    console.error(err);
+    res.status(500).json({
       message: 'Failed to fetch connections',
       error: err.message,
     });
@@ -79,25 +83,18 @@ userRouter.get('/user/connection', async (req, res) => {
 userRouter.get('/user/feed', async (req, res) => {
   try {
     const { user } = req as any;
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
-    const params = req.query as any;
-
-    const page = +params.page || 1;
-    const limit = +params.limit || 10;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
 
     const allConnectionRequestForUser = await ConnectionRequest.find({
-      $or: [
-        {
-          senderId: user._id,
-        },
-        {
-          receiverId: user._id,
-        },
-      ],
+      $or: [{ senderId: user._id }, { receiverId: user._id }],
     }).select('senderId receiverId status');
 
-    const hideUsersFromFeed = new Set();
-
+    const hideUsersFromFeed = new Set<string>();
     allConnectionRequestForUser.forEach((item) => {
       hideUsersFromFeed.add(item.senderId.toString());
       hideUsersFromFeed.add(item.receiverId.toString());
@@ -105,23 +102,21 @@ userRouter.get('/user/feed', async (req, res) => {
 
     const feedUsers = await User.find({
       $and: [
-        {
-          _id: { $nin: Array.from(hideUsersFromFeed) },
-        },
-        {
-          _id: { $ne: user._id },
-        },
+        { _id: { $nin: Array.from(hideUsersFromFeed) } },
+        { _id: { $ne: user._id } },
       ],
     })
       .select(USER_SAFE_DATA)
       .skip((page - 1) * limit)
       .limit(limit);
 
-    res.json({
+    res.status(200).json({
+      message: 'Feed fetched successfully',
       data: feedUsers,
     });
   } catch (err: any) {
-    res.status(400).json({
+    console.error(err);
+    res.status(500).json({
       message: 'Unable to get feed',
       error: err.message,
     });
