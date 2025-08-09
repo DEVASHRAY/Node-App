@@ -54,7 +54,7 @@ authRouter.post('/login', async (req, res) => {
     }
 
     const jwtToken = await user.getJWT();
-    res.cookie('token', jwtToken, { httpOnly: true, secure: true });
+    res.cookie('token', jwtToken);
 
     res.json({
       message: 'User logged in successfully',
@@ -69,7 +69,6 @@ authRouter.post('/login', async (req, res) => {
 authRouter.post('/logout', authMiddleware, (req, res) => {
   try {
     res.cookie('token', null, {
-      httpOnly: true,
       expires: new Date(0),
     });
     res.json({ message: 'User logged out successfully' });
