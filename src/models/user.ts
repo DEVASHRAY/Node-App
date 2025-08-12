@@ -1,8 +1,7 @@
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import validator from 'validator';
-import bcrypt from 'bcrypt';
-import { JWT_SECRET_KEY } from '../constants';
 
 const { Schema } = mongoose;
 
@@ -86,7 +85,11 @@ userSchema.pre('save', function (next) {
 userSchema.methods.getJWT = async function () {
   const user: any = this;
 
-  return jwt.sign({ userId: user._id }, JWT_SECRET_KEY as string, {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT Secret key not found');
+  }
+
+  return jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
     expiresIn: '1h',
   });
 };

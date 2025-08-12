@@ -1,1 +1,0 @@
-export const JWT_SECRET_KEY = 'DEV@Tinder$709';

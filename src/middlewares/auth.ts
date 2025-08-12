@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import User from '../models/user';
-import { JWT_SECRET_KEY } from '../constants';
 
 const authMiddleware = async (
   req: Request,
@@ -40,8 +39,12 @@ const authMiddleware = async (
     }
 
     let decodedObj: JwtPayload | string;
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT Secret key not found');
+    }
     try {
-      decodedObj = jwt.verify(token, JWT_SECRET_KEY as string);
+      decodedObj = jwt.verify(token, process.env.JWT_SECRET);
       console.log('Token verification successful');
     } catch (err) {
       console.log('Token verification failed:', err);
