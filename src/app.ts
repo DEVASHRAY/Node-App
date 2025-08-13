@@ -9,6 +9,7 @@ import profileRouter from './routes/profile';
 import requestRouter from './routes/request';
 import userRouter from './routes/user';
 import cors from 'cors';
+import './utils/cronjob';
 
 dotenv.config();
 
